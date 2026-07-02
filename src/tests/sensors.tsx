@@ -8,8 +8,14 @@ interface DeviceOrientationEventStatic {
 
 export function VibrationTest({ report }: TestProps) {
   const supported = typeof navigator.vibrate === 'function';
+  const [buzzed, setBuzzed] = useState(false);
+  const [maybeBlocked, setMaybeBlocked] = useState(false);
   const buzz = () => {
-    if (supported) navigator.vibrate([200, 100, 200, 100, 400]);
+    if (!supported) return;
+    // Some engines return false when the OS blocks/ignores the request.
+    const ok = navigator.vibrate([300, 120, 300, 120, 500]);
+    setBuzzed(true);
+    setMaybeBlocked(ok === false);
   };
   return (
     <div className="test-body">
@@ -24,6 +30,20 @@ export function VibrationTest({ report }: TestProps) {
           <button className="btn btn-primary" onClick={buzz}>
             📳 Vibrate
           </button>
+          {buzzed && (
+            <p className="hint-text">
+              Walang ramdam? Karaniwang dahilan: naka-<strong>Silent/DND</strong>, naka-off
+              ang <strong>haptics / vibrate-on-touch</strong> sa Settings, o hina-block ng
+              ilang phone (lalo <strong>MIUI/Xiaomi</strong>) ang web vibration. Try mo sa
+              Settings → Sounds &amp; vibration, tapos ulitin.
+            </p>
+          )}
+          {maybeBlocked && (
+            <p className="hint-text" style={{ color: '#e0b34d' }}>
+              ⚠️ Ni-report ng browser na na-block ang request — device/OS restriction, hindi
+              app bug.
+            </p>
+          )}
           <div className="result-row">
             <ResultButtons onResult={(s) => report(s)} passLabel="Ramdam ✅" failLabel="Walang vibrate ❌" />
           </div>

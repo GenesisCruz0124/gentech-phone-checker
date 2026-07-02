@@ -24,10 +24,6 @@ function CameraView({
       video: id ? { deviceId: { exact: id } } : { facingMode: facing },
     };
     const s = await start(constraints);
-    if (s && videoRef.current) {
-      videoRef.current.srcObject = s;
-      videoRef.current.play().catch(() => {});
-    }
     if (s) {
       const track = s.getVideoTracks()[0];
       const caps = (track.getCapabilities?.() ?? {}) as MediaTrackCapabilities & { torch?: boolean };
@@ -44,6 +40,18 @@ function CameraView({
       }
     }
   };
+
+  // Attach the stream to the <video> only after it has mounted. Setting
+  // srcObject right after getUserMedia resolves fails because the element
+  // isn't in the DOM yet (stream state hasn't re-rendered), leaving a black
+  // preview. Doing it in an effect keyed on `stream` fixes that.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (v && stream) {
+      v.srcObject = stream;
+      v.play().catch(() => {});
+    }
+  }, [stream]);
 
   useEffect(() => () => stop(), [stop]);
 
@@ -86,7 +94,7 @@ function CameraView({
       )}
       {stream && (
         <>
-          <video ref={videoRef} className="camera-preview" playsInline muted />
+          <video ref={videoRef} className="camera-preview" playsInline muted autoPlay />
           {lenses.length > 1 && (
             <select
               className="lens-select"
