@@ -289,6 +289,145 @@ export function BatteryTest({ report }: TestProps) {
   );
 }
 
+interface NDEFReaderLike {
+  scan: () => Promise<void>;
+  onreading: ((this: unknown, ev: unknown) => void) | null;
+  onreadingerror: ((this: unknown, ev: unknown) => void) | null;
+}
+
+export function NfcTest({ report }: TestProps) {
+  const [status, setStatus] = useState<'idle' | 'scanning' | 'read' | 'error'>('idle');
+  const [msg, setMsg] = useState<string | null>(null);
+  const supported = typeof (window as unknown as { NDEFReader?: unknown }).NDEFReader === 'function';
+
+  const scan = async () => {
+    setMsg(null);
+    if (!supported) {
+      setMsg('Web NFC hindi supported dito (Android Chrome lang).');
+      setStatus('error');
+      return;
+    }
+    try {
+      const Ctor = (window as unknown as { NDEFReader: new () => NDEFReaderLike }).NDEFReader;
+      const reader = new Ctor();
+      await reader.scan();
+      setStatus('scanning');
+      reader.onreading = () => {
+        setStatus('read');
+        report('pass', 'NFC tag na-detect');
+      };
+      reader.onreadingerror = () => {
+        setMsg('May nabasa pero may error sa tag — subukan ang ibang tag.');
+      };
+    } catch (e) {
+      const name = (e as { name?: string }).name ?? '';
+      if (name === 'NotAllowedError') {
+        setMsg('Na-block ang NFC permission. I-allow at ulitin.');
+      } else {
+        setMsg('Hindi ma-access ang NFC. Siguraduhing naka-ON ang NFC sa Settings, tapos ulitin.');
+      }
+      setStatus('error');
+    }
+  };
+
+  return (
+    <div className="test-body">
+      <p className="test-desc">
+        Android Chrome lang. Pindutin ang scan, i-allow ang NFC, tapos idikit ang NFC tag/card
+        sa likod ng phone. Kung may ma-detect = gumagana ang NFC reader.
+      </p>
+      {status !== 'read' && (
+        <button className="btn btn-primary" onClick={scan} disabled={status === 'scanning'}>
+          {status === 'scanning' ? 'Naghihintay ng tag… idikit na' : 'Scan NFC tag'}
+        </button>
+      )}
+      {status === 'read' && <div className="big-readout" style={{ color: '#12d6a0' }}>NFC OK ✅</div>}
+      {msg && <PermissionError message={msg} onRetry={scan} />}
+      <div className="result-row">
+        <ResultButtons onResult={(s) => report(s)} passLabel="Gumagana ✅" failLabel="Sira ❌" />
+      </div>
+    </div>
+  );
+}
+
+export function WirelessChargingTest({ report }: TestProps) {
+  const nav = navigator as NavConn;
+  const [supported, setSupported] = useState<boolean | null>(null);
+  const [state, setState] = useState<'idle' | 'waiting' | 'yes' | 'timeout'>('idle');
+  const batRef = useRef<BatteryManagerLike | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!nav.getBattery) {
+      setSupported(false);
+      return;
+    }
+    nav.getBattery().then((bat) => {
+      if (!mounted) return;
+      batRef.current = bat;
+      setSupported(true);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [nav]);
+
+  const test = () => {
+    const bat = batRef.current;
+    if (!bat) return;
+    if (bat.charging) {
+      setState('yes');
+      report('pass', 'Charging detected sa wireless pad');
+      return;
+    }
+    setState('waiting');
+    const onChange = () => {
+      if (bat.charging) {
+        setState('yes');
+        report('pass', 'Wireless charging detected');
+        bat.removeEventListener('chargingchange', onChange);
+        window.clearTimeout(timer);
+      }
+    };
+    bat.addEventListener('chargingchange', onChange);
+    const timer = window.setTimeout(() => {
+      bat.removeEventListener('chargingchange', onChange);
+      setState((s) => (s === 'yes' ? s : 'timeout'));
+    }, 20000);
+  };
+
+  if (supported === false) {
+    return (
+      <div className="test-body">
+        <PermissionError
+          message="Walang Battery Status API (normal sa iOS) — hindi ma-detect ang charging."
+          hint="I-check sa Settings > Battery kung nagcha-charge sa wireless pad."
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="test-body">
+      <p className="test-desc guided-badge">
+        Android lang, guided. Ilagay ang phone sa <strong>wireless charger</strong> (huwag
+        isaksak ang cable), tapos pindutin ang test. Kung ma-detect ang charging sa loob ng
+        20s, gumagana ang wireless charging coil.
+      </p>
+      <button className="btn btn-primary" onClick={test} disabled={state === 'waiting'}>
+        {state === 'waiting' ? 'Naghihintay… ilagay sa pad (20s)' : '🔋 Wireless charging test'}
+      </button>
+      {state === 'yes' && <div className="big-readout" style={{ color: '#12d6a0' }}>Charging ✅</div>}
+      {state === 'timeout' && (
+        <div className="hint-text">Walang na-detect. Siguraduhing tama ang position sa pad.</div>
+      )}
+      <div className="result-row">
+        <ResultButtons onResult={(s) => report(s, 'Guided wireless charging')} />
+      </div>
+    </div>
+  );
+}
+
 export function SimCarrierTest({ report }: TestProps) {
   return (
     <div className="test-body">

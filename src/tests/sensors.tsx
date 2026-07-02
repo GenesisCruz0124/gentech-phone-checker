@@ -311,6 +311,58 @@ export function PowerButtonTest({ report }: TestProps) {
   );
 }
 
+export function ProximityTest({ report }: TestProps) {
+  const [near, setNear] = useState<boolean | null>(null);
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    // Legacy proximity events are Firefox-only; most Chrome builds don't expose
+    // a web proximity sensor. Attempt it, otherwise fall back to a guided test.
+    const w = window as unknown as {
+      ondeviceproximity?: unknown;
+      onuserproximity?: unknown;
+    };
+    if ('ondeviceproximity' in w) {
+      const h = (e: Event & { value?: number; min?: number; max?: number }) => {
+        setLive(true);
+        const v = e.value ?? 0;
+        const max = e.max ?? 5;
+        setNear(v < max / 2);
+      };
+      window.addEventListener('deviceproximity', h as EventListener);
+      return () => window.removeEventListener('deviceproximity', h as EventListener);
+    }
+    if ('onuserproximity' in w) {
+      const h = (e: Event & { near?: boolean }) => {
+        setLive(true);
+        setNear(!!e.near);
+      };
+      window.addEventListener('userproximity', h as EventListener);
+      return () => window.removeEventListener('userproximity', h as EventListener);
+    }
+    return undefined;
+  }, []);
+
+  return (
+    <div className="test-body">
+      <p className="test-desc guided-badge">
+        Karamihan ng browser (kasama Chrome) ay hindi nagbibigay ng direktang access sa
+        proximity sensor, kaya guided ito. Takpan ang taas ng screen malapit sa earpiece —
+        sa totoong tawag, dapat mag-off ang screen. Kumpirmahin kung gumagana.
+      </p>
+      {live && (
+        <div className="big-readout" style={{ color: near ? '#12d6a0' : undefined }}>
+          {near ? 'MALAPIT' : 'MALAYO'}
+        </div>
+      )}
+      {!live && <p className="hint-text">Walang live sensor reading dito — manwal na check.</p>}
+      <div className="result-row">
+        <ResultButtons onResult={(s) => report(s, live ? 'Sensor reading available' : 'Guided proximity')} passLabel="Gumagana ✅" failLabel="Sira ❌" />
+      </div>
+    </div>
+  );
+}
+
 export function BiometricTest({ report }: TestProps) {
   const [status, setStatus] = useState<'idle' | 'running' | 'pass' | 'fail'>('idle');
   const [msg, setMsg] = useState<string | null>(null);

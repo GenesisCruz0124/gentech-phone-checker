@@ -15,13 +15,14 @@ import {
   EdgeTouchTest,
   LatencyTest,
 } from './touch';
-import { MicrophoneTest, LoudspeakerTest, EarpieceTest } from './audio';
+import { MicrophoneTest, LoudspeakerTest, EarpieceTest, HeadphoneTest } from './audio';
 import { FrontCameraTest, BackCameraTest, TorchTest } from './cameras';
 import {
   VibrationTest,
   GyroTest,
   CompassTest,
   GpsTest,
+  ProximityTest,
   VolumeButtonTest,
   PowerButtonTest,
   BiometricTest,
@@ -31,6 +32,8 @@ import {
   SpeedTest,
   BluetoothTest,
   BatteryTest,
+  NfcTest,
+  WirelessChargingTest,
   SimCarrierTest,
 } from './connectivity';
 
@@ -55,6 +58,7 @@ export const TESTS: TestModule[] = [
   { id: 'microphone', title: 'Microphone', category: 'Audio', supportedOn: 'all', blurb: 'Waveform + record/playback loop', Component: MicrophoneTest },
   { id: 'loudspeaker', title: 'Loudspeaker', category: 'Audio', supportedOn: 'all', blurb: 'Test tones + stereo L/R pan', Component: LoudspeakerTest },
   { id: 'earpiece', title: 'Earpiece', category: 'Audio', supportedOn: 'all', blurb: 'Guided — idikit sa tenga sa low volume', Component: EarpieceTest },
+  { id: 'headphones', title: 'Wired Headphones', category: 'Audio', supportedOn: 'all', blurb: 'Guided — isaksak, tapos i-play ang tono', Component: HeadphoneTest },
 
   // Cameras
   { id: 'front-camera', title: 'Front Camera', category: 'Cameras', supportedOn: 'all', blurb: 'Live preview + capture frame', Component: FrontCameraTest },
@@ -66,6 +70,7 @@ export const TESTS: TestModule[] = [
   { id: 'gyro', title: 'Gyro / Accelerometer', category: 'Sensors & Buttons', supportedOn: 'all', blurb: 'Bubble level visualization', Component: GyroTest },
   { id: 'compass', title: 'Compass', category: 'Sensors & Buttons', supportedOn: 'all', blurb: 'Heading readout', Component: CompassTest },
   { id: 'gps', title: 'GPS', category: 'Sensors & Buttons', supportedOn: 'all', blurb: 'Accuracy + lock time (walang coords stored)', Component: GpsTest },
+  { id: 'proximity', title: 'Proximity', category: 'Sensors & Buttons', supportedOn: 'all', blurb: 'Guided — sensor malapit sa earpiece', Component: ProximityTest },
   { id: 'volume-buttons', title: 'Volume Buttons', category: 'Sensors & Buttons', supportedOn: 'all', blurb: 'Guided — pindutin habang may tugtog', Component: VolumeButtonTest },
   { id: 'power-button', title: 'Power Button', category: 'Sensors & Buttons', supportedOn: 'all', blurb: 'Semi-auto lock/unlock detect', Component: PowerButtonTest },
   { id: 'biometric', title: 'Fingerprint / Face ID', category: 'Sensors & Buttons', supportedOn: 'all', blurb: 'WebAuthn responder test', Component: BiometricTest },
@@ -75,6 +80,8 @@ export const TESTS: TestModule[] = [
   { id: 'speed-test', title: 'Speed Test', category: 'Connectivity & Power', supportedOn: 'all', blurb: 'Download Mbps (median ng 3)', Component: SpeedTest },
   { id: 'bluetooth', title: 'Bluetooth', category: 'Connectivity & Power', supportedOn: 'android', blurb: 'Scan devices (Android Chrome)', Component: BluetoothTest },
   { id: 'battery', title: 'Battery & Charging', category: 'Connectivity & Power', supportedOn: 'android', blurb: 'Level + charging port test (Android)', Component: BatteryTest },
+  { id: 'wireless-charging', title: 'Wireless Charging', category: 'Connectivity & Power', supportedOn: 'android', blurb: 'Guided — ilagay sa wireless pad', Component: WirelessChargingTest },
+  { id: 'nfc', title: 'NFC', category: 'Connectivity & Power', supportedOn: 'android', blurb: 'Scan NFC tag (Android Chrome)', Component: NfcTest },
   { id: 'sim-carrier', title: 'SIM / Carrier', category: 'Connectivity & Power', supportedOn: 'all', blurb: 'Guided signal + test call', Component: SimCarrierTest },
 ];
 

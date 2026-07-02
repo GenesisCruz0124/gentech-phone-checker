@@ -186,6 +186,52 @@ export function LoudspeakerTest({ report }: TestProps) {
   );
 }
 
+export function HeadphoneTest({ report }: TestProps) {
+  const getCtx = useToneCtx();
+  const [outputs, setOutputs] = useState<number>(0);
+  const [changed, setChanged] = useState(false);
+  const baseline = useRef<number | null>(null);
+
+  useEffect(() => {
+    const md = navigator.mediaDevices;
+    if (!md?.enumerateDevices) return;
+    const update = async () => {
+      try {
+        const devs = await md.enumerateDevices();
+        const n = devs.filter((d) => d.kind === 'audiooutput').length;
+        if (baseline.current === null) baseline.current = n;
+        else if (n !== baseline.current) setChanged(true);
+        setOutputs(n);
+      } catch {
+        /* ignore */
+      }
+    };
+    update();
+    md.addEventListener?.('devicechange', update);
+    return () => md.removeEventListener?.('devicechange', update);
+  }, []);
+
+  return (
+    <div className="test-body">
+      <p className="test-desc guided-badge">
+        Guided/semi-auto. Isaksak ang wired headphones (o USB-C/3.5mm adapter), tapos i-play
+        ang tono — dapat lumipat ang tunog sa headphones. Ide-detect din ng app kung nagbago
+        ang audio outputs.
+      </p>
+      <button className="btn btn-primary" onClick={() => playTone(getCtx(), 440, 1500)}>
+        ▶ Play tone (1.5s)
+      </button>
+      <div className="hint-text">
+        Audio outputs detected: <strong>{outputs}</strong>
+        {changed && <span style={{ color: '#12d6a0' }}> · nagbago (may nakasaksak) ✅</span>}
+      </div>
+      <div className="result-row">
+        <ResultButtons onResult={(s) => report(s, changed ? 'Output change detected' : 'Guided headphone test')} passLabel="Gumagana ✅" failLabel="Sira ❌" />
+      </div>
+    </div>
+  );
+}
+
 export function EarpieceTest({ report }: TestProps) {
   const getCtx = useToneCtx();
   return (
