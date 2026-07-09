@@ -1,7 +1,7 @@
 {
   "name": "gentech-phone-checker",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "description": "GenTech Phone Checker — browser-based phone hardware diagnostic (client-side only).",
   "scripts": {
@@ -11,6 +11,7 @@
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
+    "qrcode-generator": "^1.5.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

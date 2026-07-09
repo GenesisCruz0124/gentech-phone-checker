@@ -1,5 +1,6 @@
 import type { DeviceInfo, TestModule, TestResult, TestStatus } from '../types';
 import { APP_NAME, APP_VERSION, BRAND, MESSENGER } from '../version';
+import { makeQr } from './qr';
 
 export interface ReportRow {
   title: string;
@@ -94,11 +95,13 @@ export function drawReportCanvas(
   data: ReportData,
   device: DeviceInfo | null,
   imei: string,
+  url: string,
 ): HTMLCanvasElement {
   const W = 720;
   const pad = 32;
   const line = 26;
   const dpr = 2;
+  const qrArea = 220; // reserved space at the bottom for the QR block
 
   // First measure how many lines we need.
   const body: { text: string; kind: 'h1' | 'h2' | 'meta' | 'row' | 'pass' | 'fail' | 'skip' | 'na' }[] = [];
@@ -125,7 +128,7 @@ export function drawReportCanvas(
   }
   body.push({ text: `May sira ba? Message us: ${MESSENGER}`, kind: 'h2' });
 
-  const H = pad * 2 + body.length * line + 40;
+  const H = pad * 2 + body.length * line + 40 + qrArea;
   const canvas = document.createElement('canvas');
   canvas.width = W * dpr;
   canvas.height = H * dpr;
@@ -162,5 +165,34 @@ export function drawReportCanvas(
     ctx.fillText(b.text, pad, y);
     y += line;
   }
+
+  // QR block, centered at the bottom, pointing at the live app URL.
+  const qr = makeQr(url);
+  const modMargin = 3;
+  const totalMods = qr.count + modMargin * 2;
+  const qrPx = 170;
+  const cell = Math.max(2, Math.floor(qrPx / totalMods));
+  const dim = cell * totalMods;
+  const qx = Math.round((W - dim) / 2);
+  const qy = y + 34;
+
+  ctx.fillStyle = '#8fa3b0';
+  ctx.font = 'bold 15px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('I-scan para buksan ang GenTech Checker', W / 2, y + 16);
+  ctx.textAlign = 'left';
+
+  // white quiet-zone background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(qx, qy, dim, dim);
+  ctx.fillStyle = '#0b0f14';
+  for (let r = 0; r < qr.count; r++) {
+    for (let c = 0; c < qr.count; c++) {
+      if (qr.isDark(r, c)) {
+        ctx.fillRect(qx + (c + modMargin) * cell, qy + (r + modMargin) * cell, cell, cell);
+      }
+    }
+  }
+
   return canvas;
 }
