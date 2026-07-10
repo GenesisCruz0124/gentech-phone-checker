@@ -1,7 +1,7 @@
 {
   "name": "gentech-phone-checker",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "description": "GenTech Phone Checker — browser-based phone hardware diagnostic (client-side only).",
   "scripts": {
