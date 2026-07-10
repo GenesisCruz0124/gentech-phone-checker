@@ -154,6 +154,19 @@ export function MultiTouchTest({ report }: TestProps) {
 export function LineDrawTest({ report }: TestProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
+  const size = useRef({ w: 0, h: 0 });
+
+  const drawGuides = (ctx: CanvasRenderingContext2D) => {
+    const { w, h } = size.current;
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, h / 2);
+    ctx.lineTo(w, h / 2);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(w, h);
+    ctx.stroke();
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -162,18 +175,12 @@ export function LineDrawTest({ report }: TestProps) {
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
+    size.current = { w: rect.width, h: rect.height };
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.scale(dpr, dpr);
-    // guide lines
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, rect.height / 2);
-    ctx.lineTo(rect.width, rect.height / 2);
-    ctx.moveTo(0, 0);
-    ctx.lineTo(rect.width, rect.height);
-    ctx.stroke();
+    drawGuides(ctx);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const pos = (e: React.PointerEvent) => {
@@ -181,10 +188,16 @@ export function LineDrawTest({ report }: TestProps) {
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   };
 
+  // Clear only the user's drawing — keep the guide/sample lines.
   const clear = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
-    if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!canvas || !ctx) return;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    drawGuides(ctx);
   };
 
   return (
@@ -330,33 +343,59 @@ export function GhostTouchTest({ report }: TestProps) {
 export function EdgeTouchTest({ report }: TestProps) {
   const targets = ['tl', 'tc', 'tr', 'ml', 'mr', 'bl', 'bc', 'br'] as const;
   const [hit, setHit] = useState<Set<string>>(new Set());
+  const [fs, setFs] = useState(false);
 
   useEffect(() => {
-    if (hit.size === targets.length) {
+    if (fs && hit.size === targets.length) {
+      setFs(false);
       report('pass', 'Lahat ng edges/corners tumugon');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hit]);
+  }, [hit, fs]);
+
+  const start = () => {
+    setHit(new Set());
+    setFs(true);
+  };
 
   return (
     <div className="test-body">
       <p className="test-desc">
-        Pindutin ang bawat target sa gilid at corners. Lahat dapat mag-register. Kung
-        may hindi tumutugon, may dead edge ang touch panel.
+        Fullscreen. Pindutin ang bawat target sa gilid at corners ng screen — lahat dapat
+        mag-register. Kung may hindi tumutugon, may dead edge ang touch panel.
       </p>
-      <div className="edge-frame">
-        {targets.map((t) => (
+      {!fs && (
+        <button className="btn btn-primary" onClick={start}>
+          Simulan (fullscreen)
+        </button>
+      )}
+
+      <Fullscreen active={fs} onExit={() => setFs(false)}>
+        <div className="edge-frame-full" style={{ touchAction: 'none' }}>
+          {targets.map((t) => (
+            <button
+              key={t}
+              className={`edge-target edge-${t} ${hit.has(t) ? 'edge-hit' : ''}`}
+              onPointerDown={() => setHit((s) => new Set(s).add(t))}
+              aria-label={`edge ${t}`}
+            />
+          ))}
           <button
-            key={t}
-            className={`edge-target edge-${t} ${hit.has(t) ? 'edge-hit' : ''}`}
-            onPointerDown={() => setHit((s) => new Set(s).add(t))}
-            aria-label={`edge ${t}`}
-          />
-        ))}
-        <div className="edge-center">
-          {hit.size}/{targets.length}
+            className="edge-exit"
+            onClick={(e) => {
+              e.stopPropagation();
+              setFs(false);
+            }}
+            aria-label="Itigil"
+          >
+            ×
+          </button>
+          <div className="edge-center">
+            {hit.size}/{targets.length}
+          </div>
         </div>
-      </div>
+      </Fullscreen>
+
       <div className="result-row">
         <ResultButtons onResult={(s) => report(s)} passLabel="Pass ✅" />
       </div>
