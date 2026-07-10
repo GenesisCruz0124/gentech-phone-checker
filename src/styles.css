@@ -184,6 +184,12 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; justif
 .ghost-pad { min-height: 260px; border-radius: var(--radius); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-weight: 700; }
 .ghost-good { background: rgba(18, 214, 160, 0.12); border: 2px solid var(--accent); }
 .ghost-bad { background: rgba(255, 92, 92, 0.15); border: 2px solid var(--danger); }
+.ghost-full { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 24px; }
+.ghost-full.ghost-good { background: rgba(18, 214, 160, 0.12); }
+.ghost-full.ghost-bad { background: rgba(255, 92, 92, 0.18); }
+.ghost-count { font-size: 4.5rem; font-weight: 800; line-height: 1; }
+.ghost-status { font-size: 1.3rem; font-weight: 700; }
+.ghost-hint { color: var(--fg-dim); font-size: 0.95rem; }
 .event-log { list-style: none; padding: 10px; margin: 0; background: var(--bg-elev); border-radius: var(--radius); font-size: 0.82rem; max-height: 140px; overflow-y: auto; }
 .event-log li { padding: 3px 0; color: var(--danger); }
 

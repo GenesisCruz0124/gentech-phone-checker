@@ -262,38 +262,66 @@ export function GhostTouchTest({ report }: TestProps) {
     };
   }, [running, report]);
 
-  const logTouch = () => {
+  const cancel = () => {
+    if (timerRef.current) window.clearInterval(timerRef.current);
+    setRunning(false);
+    setLeft(30);
+  };
+
+  const logTouch = (e: React.PointerEvent) => {
     if (!running) return;
     const ts = new Date().toLocaleTimeString();
-    setEvents((ev) => [...ev, `Touch @ ${ts}`]);
+    const x = Math.round(e.clientX);
+    const y = Math.round(e.clientY);
+    setEvents((ev) => [...ev, `Touch @ ${ts} (${x}, ${y})`]);
   };
 
   return (
     <div className="test-body">
       <p className="test-desc">
-        30-second test. HUWAG hawakan ang screen. Kung may ma-detect na touch habang
-        tumatakbo = ghost touch (fail). Ilalista ang bawat event na may timestamp.
+        30-second test. HUWAG hawakan ang screen. Buong screen ang binabantayan — kung may
+        ma-detect na touch kahit saan habang tumatakbo = ghost touch (fail). Ilalista ang
+        bawat event na may timestamp at posisyon.
       </p>
-      {!running ? (
+      {!running && (
         <button className="btn btn-primary" onClick={start}>
-          Simulan ang 30s test
+          Simulan ang 30s test (fullscreen)
         </button>
-      ) : (
+      )}
+
+      <Fullscreen active={running} onExit={cancel}>
         <div
-          className={`ghost-pad ${events.length ? 'ghost-bad' : 'ghost-good'}`}
+          className={`ghost-full ${events.length ? 'ghost-bad' : 'ghost-good'}`}
           style={{ touchAction: 'none' }}
           onPointerDown={logTouch}
         >
-          <div className="big-readout">{left}s</div>
-          <div>{events.length === 0 ? 'Malinis pa 👍' : `${events.length} ghost touch!`}</div>
+          <button
+            className="fill-exit"
+            onClick={(e) => {
+              e.stopPropagation();
+              cancel();
+            }}
+            aria-label="Itigil"
+          >
+            ×
+          </button>
+          <div className="ghost-count">{left}s</div>
+          <div className="ghost-status">
+            {events.length === 0 ? 'Malinis pa 👍 — huwag hawakan' : `⚠️ ${events.length} ghost touch!`}
+          </div>
+          <div className="ghost-hint">Buong screen ang sensitibo</div>
         </div>
-      )}
-      {events.length > 0 && (
-        <ul className="event-log">
-          {events.map((e, i) => (
-            <li key={i}>{e}</li>
-          ))}
-        </ul>
+      </Fullscreen>
+
+      {!running && events.length > 0 && (
+        <>
+          <div className="big-readout" style={{ color: '#ff5c5c' }}>{events.length} ghost touch</div>
+          <ul className="event-log">
+            {events.map((e, i) => (
+              <li key={i}>{e}</li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   );
