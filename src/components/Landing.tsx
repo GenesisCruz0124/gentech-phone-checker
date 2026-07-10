@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { APP_NAME, BRAND } from '../version';
+import { APP_NAME, BRAND, MESSENGER } from '../version';
 import { QrCode } from './QrCode';
 import { appUrl } from '../utils/qr';
 
@@ -20,6 +20,15 @@ export function Landing({ onStart }: { onStart: () => void }) {
       <button className="btn btn-primary btn-lg" onClick={onStart}>
         Start Diagnostic 🚀
       </button>
+
+      <a
+        className="btn btn-messenger btn-lg"
+        href={`https://${MESSENGER}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        💬 Message us sa Messenger
+      </a>
 
       <button className="btn btn-ghost" onClick={() => setShowQr((v) => !v)}>
         {showQr ? 'Itago ang QR' : '📱 Share / QR code'}
